@@ -1,0 +1,74 @@
+http://valentijn.sessink.nl/?p=382
+
+Rooting the Cube U30GT rk3066 android tablet
+I just bought a Cube U30GT Android tablet, based on the Rockchip RK3066 ARM chipset. Here are the instructions to root it under Linux.
+
+The U30GT is a nice tablet. It only cost me about 180 euros (€150 tablet + shipping, €30 VAT or “BTW” as it’s called in the Netherlands). Value for money!
+Now the reason I bought this very tablet is that it’s specs are nearing older Intel “Atom” chips, which could mean that this €180 tablet is actually a €350 laptop – minus keyboard. So the first thing to do here was to root the thing.
+Here is the step-by-step instructions for rooting this tablet under Linux. Usual disclaimers apply: do not try this at home; if you break your tablet, it’s broken; no guarantees. It worked for me, quite easily, but it may not work for you.
+
+
+
+
+1. get the rkflashtool source code from sourceforge.net/projects/rkflashtool.
+
+
+
+2. Add USB identification for the RK3066 chip, 0×2207, 0x300a. Your code will now look like:
+if (!(h = libusb_open_device_with_vid_pid(c, 0x2207, 0x290a)))
+if (!(h = libusb_open_device_with_vid_pid(c, 0x2207, 0x281a)))
+if (!(h = libusb_open_device_with_vid_pid(c, 0x2207, 0x300a)))
+   fatal("cannot open device\n");
+
+
+
+3. Install libusb-1.0-0-dev and compile:
+sudo apt-get install libusb-1.0-0-dev
+gcc -o rkflashtool rkflashtool.c -lusb-1.0 -O2 -W -Wall -s
+
+
+
+
+4. Turn off your U30GT. Insert the USB cable. Hold the “volume +” button, then push the “power” button for about 5 seconds. Afterwards, “lsusb” should show the U30GT identification, something like Bus 001 Device 007: ID 2207:300a
+
+
+
+
+5. Read the partition information for your U30GT:
+sudo ./rkflashtool r 0x0000 0x2000 > /tmp/parm
+
+
+
+
+6. in /tmp/parm you will find something like:
+CMDLINE: console=ttyFIQ0 androidboot.console=ttyFIQ0 init=/init initrd=0x62000000
+,0x00800000 mtdparts=rk29xxnand:0x00002000@0x00002000(misc),0x00004000@0x00004000
+(kernel),0x00008000@0x00008000(boot),0x00008000@0x00010000(recovery),0x00100000@0
+x00018000(backup),0x0003a000@0x00118000(cache),0x00200000@0x00152000(userdata),0x
+00002000@0x00352000(kpanic),0x00100000@0x00354000(system),-@0x00454000(user)
+It’s the “(system)” partition that we’re after. In this case: 0×00100000@0×00354000
+
+
+
+7. Use rkflashtool again, with our newly found parameters:
+sudo ./rkflashtool r 0x00354000 0x00100000 > /tmp/system.loop
+
+
+
+8. Save this file in a safe place, it is your original!
+
+
+9. From hereon, it’s rather trivial. Mount the image, change whatever you like and write it back. Something like:
+sudo mount -o loop /tmp/system.loop /mnt
+cd /mnt/app
+cp ~/Download/Superuser.apk /mnt/app
+cp ~/Download/su.arm /mnt/bin/su
+There are lots of other things that you may want to do, like removing buyu.apk CCCCACDE.apk com.chaozh.iReaderFree_145459.apk cube.0.3.0_v2963.apk es.apk Galaxy4.apk hd.apk HoloSpiralWallpaper.apk MagicSmokeWallpapers.apk qq_hd_1.7.0.apk uc.apk, change the bootanimation.zip and mess around freely. You did copy your image in step 8, didn’t you?
+
+
+10. Write back and reboot: sudo umount /mnt
+sudo ./rkflashtool w 0x00354000 0x00100000 < /tmp/system.loop
+sudo ./rkflashtool b
+
+
+That's all, folks!
