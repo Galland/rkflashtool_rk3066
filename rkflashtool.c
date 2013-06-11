@@ -1,5 +1,6 @@
 /* rkflashtool - for RK2808, RK2818 and RK2918 based tablets
  *
+ *               2013 Omegamoon         (added support for RK3188)
  * Copyright (C) 2011 Ivo van Poorten   (complete rewrite for libusb)
  * Copyright (C) 2010 FUKAUMI Naoki     (reverse engineering of protocol)
  *
@@ -152,7 +153,8 @@ int main(int argc, char **argv) {
 
     if (!(h = libusb_open_device_with_vid_pid(c, 0x2207, 0x290a)))
         if (!(h = libusb_open_device_with_vid_pid(c, 0x2207, 0x281a)))
-   		if (!(h = libusb_open_device_with_vid_pid(c, 0x2207, 0x300a)))
+   		if (!(h = libusb_open_device_with_vid_pid(c, 0x2207, 0x300a))) //RK3066
+            if (!(h = libusb_open_device_with_vid_pid(c, 0x2207, 0x310b))) //RK3188
 	            fatal("cannot open device\n");
 
     if (libusb_kernel_driver_active(h, 0) == 1) {
